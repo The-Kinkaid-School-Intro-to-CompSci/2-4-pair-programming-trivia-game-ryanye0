@@ -180,15 +180,17 @@ function displayQuestions(questions){
     let questionsContainer = document.querySelector('#questionCards');
     //clear the questions container
     ////Step 3C : Uncomment to clear the questions container
-    // clearContainer(questionsContainer);
+    clearContainer(questionsContainer);
 
     //create a card for a single question for testing
-    let question = questions[0];
-    let questionCard = createQuestionCard(question);
+    
     //append the question card to the questionsContainer
-    questionsContainer.appendChild(questionCard);
 
     //Step 3C 
+    for (let question of questions) {
+        let questionCard = createQuestionCard(question);
+        questionsContainer.appendChild(questionCard);
+    }
     //loop through the questions and create a question card for each
     //append each card to the questionsContainer
     
@@ -211,10 +213,28 @@ function handleQuestionSubmit(event){
 
     //Step 4A:
     //loop through the answers to find the selected answer and the correct answer
+    for (let answer of answers) {
+        if (answer.checked) {
+            selectedAnswer = answer.value;
+        }
+        console.log(answer.id);
+        if (answer.id.includes("-correct")) {
+            correctAnswer = answer.value;
+        }
+    }
 
     //Step 4B:
     //update the score based on the selected answer and the correct answer
     //also add one to the questionsAnswered
+    if (selectedAnswer === correctAnswer) {
+        score += 1;
+        alert("RIGHT")
+    }
+    else {
+        score -= 1;
+        alert(`WRONG CORRECT ANSWER IS: ${correctAnswer}`)
+    }
+    questionsAnswered += 1;
     
 
     //update the score display
@@ -230,6 +250,22 @@ function handleQuestionSubmit(event){
  * @param {Object} question - the question object
  * @returns {HTMLDivElement} - the question card element
  */
+function shuffle(array) {
+    let currentIndex = array.length;
+  
+    // While there remain elements to shuffle...
+    while (currentIndex != 0) {
+  
+      // Pick a remaining element...
+      let randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+  
+      // And swap it with the current element.
+      [array[currentIndex], array[randomIndex]] = [
+        array[randomIndex], array[currentIndex]];
+    }
+  }
+//from https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
 function createQuestionCard(question){
 
     //create a div element with the class card
@@ -246,6 +282,12 @@ function createQuestionCard(question){
     //Step 6
     //Step 3A: Create the header of the card
     console.log(question);
+    const cardHeader = document.createElement('div')
+    const cardTItle = document.createElement('h5')
+    cardTItle.textContent = question.question
+    const subtitle = document.createElement('p')
+    subtitle.textContent = question.category
+
     //create a header (div element) with class card-header
 
     //create an title (h5 element) with the class card-title
@@ -257,7 +299,10 @@ function createQuestionCard(question){
 
 
     //append the cardTitle and subtitle to the cardHeader
-
+    questionCard.appendChild(cardHeader)
+    cardHeader.appendChild(cardTItle)
+    cardHeader.appendChild(subtitle)
+    
     //append the cardHeader to the questionCard
 
     /*********** HEADER END ************* */
@@ -274,12 +319,22 @@ function createQuestionCard(question){
     //create a div with class form-check for the correct answer
     //calling the function createFormCheckInput
     let correctAnswerFormCheck = createFormCheckInput(question, true, question.correct_answer);
+    let allAnswers = [];
     //append the correctAnswerFormCheck to the cardBody
-    cardBody.appendChild(correctAnswerFormCheck);
+    // cardBody.appendChild(correctAnswerFormCheck);
 
     //Part 3B: 
     //for each incorrect answer, make an input with type radio and class form-check input, call the function createFormCheckInput
-    
+    for(let incorrectAnswers of question.incorrect_answers){
+        let correctAnswerFormCheck = createFormCheckInput(question, false, incorrectAnswers)
+        allAnswers.push(correctAnswerFormCheck)
+
+    }
+    allAnswers.push(correctAnswerFormCheck);
+    shuffle(allAnswers);
+    for (let answer of allAnswers) {
+        cardBody.append(answer);
+    }
 
     //append the cardBody to the form
     form.appendChild(cardBody);
@@ -327,18 +382,23 @@ function createQuestionCard(question){
  */
 async function getQuestions(){
     console.log("Fetching questions from the API");
-    const baseURL = 'https://opentdb.com/api.php?amount=1';
+    const baseURL = 'https://opentdb.com/api.php?';
+    
+    
     
     //Step 1: get the user input (number of questions to get)
     //get the number of questions to fetch from the user input
-
+    const numOfQuesitonsInput = document.querySelector("#numberOfQuestions")
+    const numOfQuestions = numOfQuesitonsInput.value
+    const numOfQuestionsString = `amount=${numOfQuestions}`
     //update the totalQuestions variable
-
+    totalQuestions = Number(numOfQuestions)
     //Step 2: get the user input (category)
-
-
+    const categorySelectInput = document.querySelector("#categorySelect")
+    const categorySelect = categorySelectInput.value
+    const categorySelectString = `category=${categorySelect}`
     //build the full URL
-    const fullURL = `${baseURL}`;
+    const fullURL = `${baseURL}${numOfQuestionsString}&${categorySelectString}`;
     console.log("Full URL: ", fullURL);
     //make the fetch request
     const response = await fetch(fullURL);
@@ -405,11 +465,16 @@ function handleRestartBtn(){
  */
 function filterByDifficulty(difficulty){
     let filteredQuestions = [];
-
+    
     //Step 5: filter the triviaQuestions array by the difficulty
+    for (let questions of triviaQuestions) {
+        console.log(questions)
+        if (questions.difficulty === difficulty) {
+            filteredQuestions.push(questions)
+        }
+    }
     //loop through the triviaQuestions array
     //if the question.difficulty is equal to the difficulty, push it to the filteredQuestions array
-
     //return an array of questions that match the difficulty
     return filteredQuestions;
 }
@@ -449,8 +514,8 @@ function runProgram() {
 
     //add an event listener to the difficulty filter
     //Step 5:
-    // let difficultyFilter = document.querySelector('#difficultyFilter');
-    // difficultyFilter.addEventListener('change', (event) => handleDifficultyFilter(event));
+    let difficultyFilter = document.querySelector('#difficultyFilter');
+    difficultyFilter.addEventListener('change', (event) => handleDifficultyFilter(event));
 
     //Step 6: try to do it on your own
 }
